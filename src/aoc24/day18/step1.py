@@ -1,7 +1,7 @@
 from itertools import pairwise, chain
 from pathlib import Path
 from typing import List, Tuple, Dict, Set
-from colorama import Fore, Style
+from colorama import Back, Fore, Style
 import heapq
 
 
@@ -31,10 +31,15 @@ def walls_to_maze(
     ]
 
 
-def draw(maze: List[str], path: Set[Tuple[int, int]]):
+def draw(
+    maze: List[str], path: List[Tuple[int, int]], min_map: Dict[Tuple[int, int], int]
+):
+    end = path[-1] if path else None
     for y, line in enumerate(maze):
         for x, c in enumerate(line):
-            if (x, y) in path:
+            if (x, y) == end:
+                print(Fore.RED + Back.WHITE + c + Back.RESET + Fore.RESET, end="")
+            elif (x, y) in min_map:
                 print(Fore.RED + c + Fore.RESET, end="")
             else:
                 print(c, end="")
@@ -47,35 +52,36 @@ def score_path(path: List[Tuple[int, int]]) -> int:
 
 def main():
     file, size, limit = Path(__file__).parent / "input", 71, 1024
-    # file, size, limit = Path(__file__).parent / "example", 7, 12
+    #file, size, limit = Path(__file__).parent / "example", 7, 12
 
     maze = walls_to_maze(file.read_text().splitlines(), size, limit)
-    draw(maze, set())
 
     start = (0, 0)
     end = (size - 1, size - 1)
 
-    heap: List[Tuple[int, Tuple[int, int], List[Tuple[int, int]]]] = [
-        (0, start, [start])
-    ]
+    heap: List[Tuple[int, int, Tuple[int, int]]] = [(0, 1, start)]
 
     min_map: Dict[Tuple[int, int], int] = {}
 
     best_paths: List[List[Tuple[int, int]]] = []
     best_score = None
+    last_score = 0
 
     while True:
-        score, pos, path = heapq.heappop(heap)
+        _heuristic, score, pos = heapq.heappop(heap)
 
-        print(score)
+        if score > last_score:
+            print("=" * size)
+            draw(maze, [], min_map)
+            print(_heuristic, score, len(heap), len(min_map))
+            last_score = score
 
         if best_score and score > best_score:
             break
 
         if pos == end:
-            assert score == score_path(path)
             best_score = score
-            best_paths.append(path)
+            best_paths.append([])
 
         for d in DIRECTIONS:
             new_pos = (pos[0] + d[0], pos[1] + d[1])
@@ -91,23 +97,20 @@ def main():
             if maze[new_pos[1]][new_pos[0]] == "#":
                 continue
 
-            if new_pos in path:
-                continue
-
-            new_path = path + [new_pos]
-            new_score = score_path(new_path)
+            # new_path = path + [new_pos]
+            new_score = score + 1
 
             key = new_pos
-            if (key in min_map) and (new_score > min_map[key]):
+            if (key in min_map) and (new_score >= min_map[key]):
                 continue
+
             min_map[key] = new_score
 
-            heapq.heappush(heap, (new_score, new_pos, new_path))
+            guess = new_score + abs(new_pos[0] - end[0]) + abs(new_pos[1] - end[1])
+
+            heapq.heappush(heap, (guess, new_score, new_pos))
 
     print(best_score - 1)
-
-    path = best_paths[0]
-    draw(maze, set(path))
 
 
 if __name__ == "__main__":
