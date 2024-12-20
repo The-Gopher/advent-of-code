@@ -14,16 +14,8 @@ DIRECTION_MAP = {
 }
 
 
-def walls_to_maze(
-    walls_raw: List[str], limit: int | None = None
-) -> List[Tuple[int, int]]:
-    return [
-        (int(x), int(y))
-        for x, y in (
-            line.split(",")
-            for line in ((walls_raw[:limit] if limit is not None else walls_raw))
-        )
-    ]
+def walls_to_maze(walls_raw: List[str]) -> List[Tuple[int, int]]:
+    return [(int(x), int(y)) for x, y in (line.split(",") for line in walls_raw)]
 
 
 def draw(
@@ -49,15 +41,7 @@ def score_path(path: List[Tuple[int, int]]) -> int:
     return len(path)
 
 
-def main():
-    file, size, limit = Path(__file__).parent / "input", 71, 1024
-    # file, size, limit = Path(__file__).parent / "example", 7, 12
-
-    maze = walls_to_maze(file.read_text().splitlines(), limit)
-
-    start = (0, 0)
-    end = (size - 1, size - 1)
-
+def find_shortest_path(maze, start, end, size) -> int | None:
     heap: List[Tuple[int, int, Tuple[int, int]]] = [(0, 1, start)]
 
     min_map: Dict[Tuple[int, int], int] = {}
@@ -65,7 +49,7 @@ def main():
     best_paths: List[List[Tuple[int, int]]] = []
     best_score = None
 
-    while True:
+    while len(heap) > 0:
         _heuristic, score, pos = heapq.heappop(heap)
 
         if best_score and score > best_score:
@@ -103,8 +87,37 @@ def main():
             guess = new_score + abs(new_pos[0] - end[0]) + abs(new_pos[1] - end[1])
 
             heapq.heappush(heap, (guess, new_score, new_pos))
-    print(min_map[end])
-    print(best_score - 1)
+
+    return best_score
+
+
+def main():
+    file, size, limit = Path(__file__).parent / "input", 71, 1024
+    # file, size, limit = Path(__file__).parent / "example", 7, 12
+
+    start = (0, 0)
+    end = (size - 1, size - 1)
+
+    maze = walls_to_maze(file.read_text().splitlines())
+    total_length = len(maze)
+
+    low, mid, high = 0, total_length // 2, total_length
+    while low != high:
+        print(low, mid, high)
+        partial_maze = maze[:mid]
+        distance = find_shortest_path(partial_maze, start, end, size)
+
+        if distance:
+            low, mid, high = mid, (mid + high) // 2, high
+        else:
+            low, mid, high = low, (low + mid) // 2, mid - 1
+
+    partial_maze = maze[:mid]
+    print(find_shortest_path(partial_maze, start, end, size))
+
+    partial_maze = maze[: mid + 1]
+    print(find_shortest_path(partial_maze, start, end, size))
+    print(partial_maze[-1])
 
 
 if __name__ == "__main__":
