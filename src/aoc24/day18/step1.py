@@ -15,9 +15,9 @@ DIRECTION_MAP = {
 
 
 def walls_to_maze(
-    walls_raw: List[str], size: int, limit: int | None = None
-) -> List[str]:
-    walls: List[Tuple[int, int]] = [
+    walls_raw: List[str], limit: int | None = None
+) -> List[Tuple[int, int]]:
+    return [
         (int(x), int(y))
         for x, y in (
             line.split(",")
@@ -25,24 +25,23 @@ def walls_to_maze(
         )
     ]
 
-    return [
-        "".join(["#" if (x, y) in walls else "." for x in range(size)])
-        for y in range(size)
-    ]
-
 
 def draw(
-    maze: List[str], path: List[Tuple[int, int]], min_map: Dict[Tuple[int, int], int]
+    maze: List[Tuple[int, int]],
+    path: List[Tuple[int, int]],
+    min_map: Dict[Tuple[int, int], int],
+    size: int,
 ):
-    end = path[-1] if path else None
-    for y, line in enumerate(maze):
-        for x, c in enumerate(line):
-            if (x, y) == end:
-                print(Fore.RED + Back.WHITE + c + Back.RESET + Fore.RESET, end="")
+    for y in range(size):
+        for x in range(size):
+            if (x, y) in maze:
+                print("#", end="")
+            elif (x, y) in path:
+                print(Fore.RED + "O" + Fore.RESET, end="")
             elif (x, y) in min_map:
-                print(Fore.RED + c + Fore.RESET, end="")
+                print(Fore.RED + "." + Fore.RESET, end="")
             else:
-                print(c, end="")
+                print(".", end="")
         print(Style.RESET_ALL)
 
 
@@ -52,9 +51,9 @@ def score_path(path: List[Tuple[int, int]]) -> int:
 
 def main():
     file, size, limit = Path(__file__).parent / "input", 71, 1024
-    #file, size, limit = Path(__file__).parent / "example", 7, 12
+    # file, size, limit = Path(__file__).parent / "example", 7, 12
 
-    maze = walls_to_maze(file.read_text().splitlines(), size, limit)
+    maze = walls_to_maze(file.read_text().splitlines(), limit)
 
     start = (0, 0)
     end = (size - 1, size - 1)
@@ -65,16 +64,9 @@ def main():
 
     best_paths: List[List[Tuple[int, int]]] = []
     best_score = None
-    last_score = 0
 
     while True:
         _heuristic, score, pos = heapq.heappop(heap)
-
-        if score > last_score:
-            print("=" * size)
-            draw(maze, [], min_map)
-            print(_heuristic, score, len(heap), len(min_map))
-            last_score = score
 
         if best_score and score > best_score:
             break
@@ -94,22 +86,24 @@ def main():
             ):
                 continue
 
-            if maze[new_pos[1]][new_pos[0]] == "#":
+            if new_pos in maze:
                 continue
 
             # new_path = path + [new_pos]
             new_score = score + 1
 
             key = new_pos
-            if (key in min_map) and (new_score >= min_map[key]):
+            if key not in min_map:
+                min_map[key] = new_score
+            elif new_score < min_map[key]:
+                min_map[key] = new_score
+            else:
                 continue
-
-            min_map[key] = new_score
 
             guess = new_score + abs(new_pos[0] - end[0]) + abs(new_pos[1] - end[1])
 
             heapq.heappush(heap, (guess, new_score, new_pos))
-
+    print(min_map[end])
     print(best_score - 1)
 
 
