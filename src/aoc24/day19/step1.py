@@ -10,12 +10,7 @@ def get_patter_match_index(pattern: str, start: int, towels: List[str]) -> List[
 
 
 def match_pattern(pattern: str, towels: List[str]):
-    start_end_maps: Dict[int, List[str]] = {
-        start: get_patter_match_index(pattern, start, towels)
-        for start in range(len(pattern))
-    }
-
-    can_end_here = [True] + ([False] * len(pattern))
+    can_end_here: List[int] = [1] + ([0] * len(pattern))
 
     for start in range(1, len(can_end_here)):
         for towel in towels:
@@ -23,8 +18,8 @@ def match_pattern(pattern: str, towels: List[str]):
             if match_start < 0:
                 continue
             if can_end_here[match_start] and pattern.startswith(towel, match_start):
-                can_end_here[start] = True
-                break
+                can_end_here[start] += can_end_here[match_start]
+
     return can_end_here[-1]
 
 
@@ -39,9 +34,7 @@ def main():
     count = 0
 
     for pattern in patterns.splitlines():
-        match = match_pattern(pattern, towels)
-        if match:
-            count += 1
+        count += match_pattern(pattern, towels)
 
     print(count)
 
