@@ -6,20 +6,19 @@ from typing import List, Tuple, Dict, Set
 from colorama import Fore, Style
 import heapq
 
-DIRECTIONS = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-DIRECTION_MAP = {
-    "^": (0, -1),
-    "v": (0, 1),
-    ">": (1, 0),
-    "<": (-1, 0),
-}
 
-DIRECTIONS_2 = {
-    (ax + bx, ay + by)
-    for ax, ay in DIRECTIONS
-    for bx, by in DIRECTIONS
-    if ax + bx or ay + by
-}
+def get_diamond(size: int) -> List[Tuple[int, int]]:
+    diamond = []
+    for x in range(size + 1):
+        diamond.append((x, size - x))
+        diamond.append((-x, size - x))
+        diamond.append((x, -size + x))
+        diamond.append((-x, -size + x))
+    return list(set(diamond))
+
+
+DIRECTIONS = get_diamond(1)
+DIRECTIONS_2 = get_diamond(20)
 
 
 def find_point(maze: List[str], point: str) -> Tuple[int, int] | None:
@@ -46,8 +45,7 @@ def score_path(path: List[Tuple[int, int]]) -> int:
 
 def main():
     file, expected = Path(__file__).parent / "input", None
-    # file, expected = Path(__file__).parent / "example_2", 11048
-    # file, expected = Path(__file__).parent / "example", None
+    file, expected = Path(__file__).parent / "example", None
 
     maze = file.read_text().splitlines()
 
@@ -96,9 +94,6 @@ def main():
     path: List[Tuple[int, int]] = best_paths[0]
     point_distances = {path[i]: score_path(path[i:]) for i in range(len(path))}
 
-    for p in point_distances.items():
-        print(p)
-
     count = 0
     for p in path:
         px, py = p
@@ -114,10 +109,8 @@ def main():
             if shortcut_gain <= 0:
                 continue
 
-            if shortcut_gain >= 100:
+            if shortcut_gain >= 50:
                 count += 1
-
-    print(count)
 
 
 if __name__ == "__main__":

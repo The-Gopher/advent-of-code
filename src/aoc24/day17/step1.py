@@ -111,9 +111,23 @@ def test():
 
 def main():
     cpu = CPU(22571680, 0, 0)
-    cpu.run_program([2, 4, 1, 3, 7, 5, 0, 3, 4, 3, 1, 5, 5, 5, 3, 0], True)
+    cpu.run_program([2, 4, 1, 3, 7, 5, 0, 3, 4, 3, 1, 5, 5, 5, 3, 0])
     assert cpu.output != [6, 2, 4, 3, 0, 6, 0, 4, 7]
     assert cpu.output == [2, 0, 1, 3, 4, 0, 2, 1, 7]
+
+    # B = A % 8 (2, 4)
+    # B = B ^ 3 (1, 3)
+    # C = A / 2 ** B (7, 5)
+    # A = A / 2 ** 3 (0, 3)
+    # B = B ^ C (4, 3)
+    # B = B ^ 5 (1, 5)
+    # out(B % 8) (5, 5)
+
+    for i in range(2048):
+        cpu = CPU(i, 0, 0)
+        cpu.run_program([2, 4, 1, 3, 7, 5, 0, 3, 4, 3, 1, 5, 5, 5])
+
+        print(f"{i: 5} {i % 8} { (i // 8 )% 8} {cpu.output[0]}")
 
     print(",".join(str(x) for x in cpu.output))
 
