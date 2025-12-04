@@ -35,19 +35,39 @@ def count_neighbors(arr: array) -> array:
     return np.multiply(arr, neighbors)
 
 
-def step1():
-    data = input_to_array(INPUT_FILE.read_text())
-    data = count_neighbors(data)
+def find_removable_rolls(arr: array) -> array:
+    data = count_neighbors(arr)
 
     data[data == 0] = 7
     data[data <= 4] = 1
     data[data != 1] = 0
+    return data
 
-    print(sum(data))
+
+def step1():
+    data = input_to_array(INPUT_FILE.read_text())
+    print("Step 1:", sum(find_removable_rolls(data)))
+
+
+def step2():
+    data_original = input_to_array(INPUT_FILE.read_text())
+    data = data_original.copy()
+
+    print(" -- Starting Step 2 -- ")
+    rolls_removed = 1
+    while rolls_removed > 0:
+        data_before = data.copy()
+        data = find_removable_rolls(data)
+        rolls_removed = sum(data)
+        print(f"{sum(data_before)} - {sum(data)} = {sum(data_before - data)}")
+        data = data_before - data
+
+    print("Step 2:", sum(data_original) - sum(data))
 
 
 if __name__ == "__main__":
     step1()
+    step2()
 
 
 def test_case1():
