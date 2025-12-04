@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from pyparsing import line
 
 EXAMPLE_FILE = Path(__file__).parent / "example"
 INPUT_FILE = Path(__file__).parent / "input"
@@ -39,14 +38,19 @@ def step1():
         sum(line_to_max_joltage(line) for line in INPUT_FILE.read_text().splitlines()),
     )
 
+
 def line_to_max_joltage_12(line: str) -> int:
     return int(step(line[:12], line[12:]))
+
 
 def step2():
     print(
         "Step 2: ",
-        sum(line_to_max_joltage_12(line) for line in INPUT_FILE.read_text().splitlines()),
+        sum(
+            line_to_max_joltage_12(line) for line in INPUT_FILE.read_text().splitlines()
+        ),
     )
+
 
 if __name__ == "__main__":
     step1()
