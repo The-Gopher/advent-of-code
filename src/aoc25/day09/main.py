@@ -1,8 +1,50 @@
+from operator import le
 from pathlib import Path
-from itertools import combinations, pairwise, chain
+from itertools import chain, combinations, pairwise
+from progress.bar import Bar
 
 INPUT = Path(__file__).parent / "input"
 # INPUT = Path(__file__).parent / "example"
+
+
+def compute_area(p1: tuple[int, int], p2: tuple[int, int]) -> int:
+    (x1, y1) = p1
+    (x2, y2) = p2
+    return (abs(x1 - x2) + 1) * (abs(y1 - y2) + 1)
+
+
+def points_in_rectangle(
+    rect: tuple[tuple[int, int], tuple[int, int]], all_points: set[tuple[int, int]]
+) -> set[tuple[int, int]]:
+    p1, p2 = rect
+    (x1, y1) = p1
+    (x2, y2) = p2
+
+    points: set[tuple[int, int]] = set()
+    for p in all_points:
+        (px, py) = p
+        if min(x1, x2) < px < max(x1, x2) and min(y1, y2) < py < max(y1, y2):
+            points.add(p)
+    return points
+
+
+def print_rectangle(
+    size: tuple[int, int],
+    red_points: list[tuple[int, int]],
+    corners: tuple[tuple[int, int], tuple[int, int]],
+) -> None:
+    size_x, size_y = size
+
+    for y in range(size_y):
+        row = ""
+        for x in range(size_x):
+            if (x, y) in corners:
+                row += "C"
+            elif (x, y) in red_points:
+                row += "R"
+            else:
+                row += "."
+        print(row)
 
 
 def step1():
@@ -12,7 +54,7 @@ def step1():
     ]
     pairs = list(combinations(red_tiles, 2))
     areas = [
-        ((abs(x1 - x2) + 1) * (abs(y1 - y2) + 1), (x1, y1), (x2, y2))
+        (compute_area((x1, y1), (x2, y2)), (x1, y1), (x2, y2))
         for (x1, y1), (x2, y2) in pairs
     ]
     print(max(areas))
@@ -25,53 +67,33 @@ def step2():
         for a, b in (pair.split(",") for pair in INPUT.read_text().splitlines())
     ]
 
-    print("Compute Green Tile Perimeter")
-    green_tiles = set()
-    for a, b in pairwise(chain(red_tiles, [red_tiles[0]])):
-        if a[0] == b[0]:
-            for y in range(min(a[1], b[1]), max(a[1], b[1]) + 1):
-                tile = (a[0], y)
-                if tile not in red_tiles:
-                    green_tiles.add((a[0], y))
-        elif a[1] == b[1]:
-            for x in range(min(a[0], b[0]), max(a[0], b[0]) + 1):
-                tile = (x, a[1])
-                if tile not in red_tiles:
-                    green_tiles.add((x, a[1]))
-        else:
-            raise ValueError("Non axis-aligned edge")
+    bar = Bar("Compute Green Tiles")
+    green_tiles: set[tuple[int, int]] = set()
+    for p1, p2 in bar.iter(pairwise(chain(red_tiles, [red_tiles[0]]))):
+        (x1, y1) = p1
+        (x2, y2) = p2
 
-    x_max = max(x for x, y in green_tiles)
-    y_max = max(y for x, y in green_tiles)
+        if x1 == x2:
+            for y in range(min(y1, y2) + 1, max(y1, y2)):
+                green_tiles.add((x1, y))
+        elif y1 == y2:
+            for x in range(min(x1, x2) + 1, max(x1, x2)):
+                green_tiles.add((x, y1))
+    print("Green Tiles: ", len(green_tiles))
 
-    print(x_max, y_max)
+    pairs = list(combinations(red_tiles, 2))
+    areas: list[tuple[int, tuple[int, int], tuple[int, int]]] = []
+    bar = Bar("Finding Max Area")
+    for p1, p2 in bar.iter(pairs):
+        points_in_rect = points_in_rectangle((p1, p2), green_tiles)
 
-    print("Fill Interior with Green Tiles")
-    if False:
-        for row in range(y_max + 1):
-            green_tiles_in_row = [(x, y) for x, y in green_tiles if y == row]
-            if not green_tiles_in_row:
-                continue
+        if points_in_rect:
+            continue
 
-            x_min = min([x for x, y in green_tiles_in_row])
-            x_max = max([x for x, y in green_tiles_in_row])
+        area = compute_area(p1, p2)
+        areas.append((area, p1, p2))
 
-            for x in range(x_min, x_max + 1):
-                if (x, row) not in red_tiles and (x, row) not in green_tiles:
-                    green_tiles.add((x, row))
-
-    print("Render Tiles")
-    assert set(red_tiles).isdisjoint(green_tiles)
-    for y in range(y_max + 2):
-        row = ""
-        for x in range(x_max + 2):
-            if (x, y) in green_tiles:
-                row += "G"
-            elif (x, y) in red_tiles:
-                row += "R"
-            else:
-                row += "."
-        print(row)
+    print(max(areas))
 
 
 if __name__ == "__main__":
