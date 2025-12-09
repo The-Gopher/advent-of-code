@@ -97,12 +97,9 @@ def step2():
     x_to_x_rank: dict[int, int] = {
         x: idx for idx, x in enumerate(sorted([x for x, y in red_tiles]), 1)
     }
-    x_rank_to_x: dict[int, int] = {idx: x for x, idx in x_to_x_rank.items()}
-
     y_to_y_rank: dict[int, int] = {
         y: idx for idx, y in enumerate(sorted([y for x, y in red_tiles]), 1)
     }
-    y_rank_to_y: dict[int, int] = {idx: y for y, idx in y_to_y_rank.items()}
 
     print(len(x_to_x_rank))
     print(len(y_to_y_rank))
@@ -122,6 +119,9 @@ def step2():
             for x in range(min(x1, x2) + 1, max(x1, x2)):
                 green_tiles_idx.add((x, y1))
     print("Green Tiles: ", len(green_tiles_idx))
+
+    x_rank_to_x: dict[int, int] = {idx: x for x, idx in x_to_x_rank.items()}
+    y_rank_to_y: dict[int, int] = {idx: y for y, idx in y_to_y_rank.items()}
 
     pairs = list(combinations(red_tiles_idx, 2))
     areas: list[tuple[int, tuple[int, int], tuple[int, int]]] = []
