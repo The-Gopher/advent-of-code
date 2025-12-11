@@ -37,7 +37,7 @@ def paths_between_nodes(
     start: str,
     end: str,
 ) -> int:
-
+    topological_sorted = topological_sort(nodes)
     nodes_to_explore = [start]
     total_paths = {start: 1}
     while nodes_to_explore:
@@ -47,16 +47,22 @@ def paths_between_nodes(
                 total_paths[to_node] = 0
                 nodes_to_explore.append(to_node)
             total_paths[to_node] += total_paths[current_node]
+
+        nodes_to_explore = [n for n in topological_sorted if n in nodes_to_explore]
+
     return total_paths.get(end, 0)
 
 
 def step1():
     INPUT = Path(__file__).parent / "input"
     # INPUT = Path(__file__).parent / "example"
+    # INPUT = Path(__file__).parent / "test_case1"
 
     nodes = parse_file(INPUT)
     print("Step 1: ", paths_between_nodes(nodes, "you", "out"))
-    assert paths_between_nodes(nodes, "you", "out") == 796
+    assert paths_between_nodes(nodes, "you", "out") == 796, paths_between_nodes(
+        nodes, "you", "out"
+    )
 
 
 def step2():
@@ -65,21 +71,24 @@ def step2():
 
     nodes = parse_file(INPUT)
 
-    topologically_sorted = topological_sort(nodes)
-    a = (topologically_sorted.index("dac"), "dac")
-    b = (topologically_sorted.index("fft"), "fft")
-
-    start = "svr"
-    first_node = min(a, b)[1]
-    second_node = max(a, b)[1]
-    end = "out"
+    srv_fft_dac_out = (
+        paths_between_nodes(nodes, "svr", "fft")
+        * paths_between_nodes(nodes, "fft", "dac")
+        * paths_between_nodes(nodes, "dac", "out")
+    )
+    print("srv_fft_dac_out: ", srv_fft_dac_out)
 
     srv_dac_fft_out = (
-        paths_between_nodes(nodes, start, first_node)
-        * paths_between_nodes(nodes, first_node, second_node)
-        * paths_between_nodes(nodes, second_node, end)
+        paths_between_nodes(nodes, "svr", "dac")
+        * paths_between_nodes(nodes, "dac", "fft")
+        * paths_between_nodes(nodes, "fft", "out")
     )
-    print("Step 2: ", srv_dac_fft_out)
+    print("srv_dac_fft_out: ", srv_dac_fft_out)
+
+    step2_result = srv_fft_dac_out + srv_dac_fft_out
+
+    assert step2_result > 24282063274560
+    print("Step 2: ", step2_result)
 
 
 if __name__ == "__main__":
@@ -87,3 +96,4 @@ if __name__ == "__main__":
     step2()
 
 # Step 2 Attempt 1: 24282063274560 - too low
+# Step 2 Attempt 2: 294053029111296
