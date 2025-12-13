@@ -1,5 +1,7 @@
+from itertools import pairwise
 from pathlib import Path
 from math import log10, ceil
+from typing import Generator
 
 EXAMPLE_FILE = Path(__file__).parent / "example"
 INPUT_FILE = Path(__file__).parent / "input"
@@ -8,20 +10,65 @@ INPUT_FILE = Path(__file__).parent / "input"
 def step1():
     total = 0
     text = INPUT_FILE.read_text().strip()
-    for line  in text.split(","):
+    for line in text.split(","):
         start, end = map(int, line.split("-"))
         result = sum_in_range(start, end)
         total += result
-        print(f"Sum in range {start}-{end}: {result}")
     print(f"Total sum: {total}")
 
 
+#  1 -> nil
+#  2 -> 11
+#  3 -> 111
+#  4 -> 1111, 101
+#  5 -> 11111
+#  6 -> 111111, 1001, 10101
+#  7 -> 1111111
+#  8 -> 11111111, 10001, 1010101
+#  9 -> 111111111, 1001001
+# 10 -> 1111111111, 100001, 101010101
+ASDFASDF = {
+    2: [11],
+    3: [111],
+    4: [1111, 101],
+    5: [11111],
+    6: [111111, 1001, 10101],
+    7: [1111111],
+    8: [11111111, 10001, 1010101],
+    9: [111111111, 1001001],
+    10: [1111111111, 100001, 101010101],
+}
+
+
 def step2():
-    pass
+    # min =             3
+    # max = 9_899_040_061
+    ranges = [
+        (int(start), int(end))
+        for start, end in (
+            line.split("-") for line in INPUT_FILE.read_text().strip().split(",")
+        )
+    ]
+    ranges = sorted(ranges)
+    for a, b in pairwise(ranges):
+        if a[1] >= b[0]:
+            raise ValueError(f"Overlapping ranges: {a} and {b}")
+
+    sum_of_invalid = 0
+    for start, end in ranges:
+        for mag, r_start, r_end in range_to_magnatude_ranges(start, end):
+            candidates = ASDFASDF.get(mag, [])
+            for test_digit in range(r_start, r_end + 1):
+                for candidate in candidates:
+                    if test_digit % candidate == 0:
+                        sum_of_invalid += test_digit
+                        break
+    print(f"Total sum of invalid numbers: {sum_of_invalid}")
 
 
 def main():
     step1()
+    step2()
 
 
 def sum_in_range(start: int, end: int) -> int:
@@ -69,6 +116,16 @@ def get_digit_range_start(start, num_digits):
 
 def get_digit_range_end(end, num_digits):
     return min(end, 10**num_digits - 1)
+
+
+def range_to_magnatude_ranges(start: int, end: int) -> Generator[tuple[int, int, int]]:
+    start_mag = n_to_digits(start)
+    end_mag = n_to_digits(end)
+
+    for mag in range(start_mag, end_mag + 1):
+        range_start = max(start, 10 ** (mag - 1))
+        range_end = min(end, 10**mag - 1)
+        yield mag, range_start, range_end
 
 
 if __name__ == "__main__":
