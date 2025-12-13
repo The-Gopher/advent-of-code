@@ -59,6 +59,11 @@ def step2():
         for mag, r_start, r_end in range_to_magnatude_ranges(start, end):
             candidates = ASDFASDF.get(mag, [])
             for test_digit in range(r_start, r_end + 1):
+                x = [
+                    candidate for candidate in candidates if test_digit % candidate == 0
+                ]
+                if x:
+                    print(x)
                 for candidate in candidates:
                     if test_digit % candidate == 0:
                         sum_of_invalid += test_digit

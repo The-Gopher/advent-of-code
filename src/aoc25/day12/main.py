@@ -82,10 +82,22 @@ def parse_input(
     return areas
 
 
+def round_to_nearest(value: int, base: int) -> int:
+    return base * (value // base)
+
+
 def step1():
     areas = parse_input(INPUT)
 
-    can_fit = [a for a in areas if a.total_required_area <= a.area]
+    cannot_fit = [a for a in areas if a.total_required_area > a.area]
+    can_fit = [
+        a
+        for a in areas
+        if round_to_nearest(a.height, 3) * round_to_nearest(a.width, 3)
+        <= sum(a.shape_requirements)
+    ]
+
+    print("Areas that cannot fit all required shapes:", len(cannot_fit))
     print("Areas that can fit all required shapes:", len(can_fit))
 
 
